@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -*-
+
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
@@ -42,7 +45,8 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
             SDP = SDP + "s=MiSesion" + "\r\n" + "t=0" + "\r\n"
             SDP = SDP + "m=audio " + str(data["puerto_rtp"]) + " RTP"
             return SDP
-		#Cuando recibimos un invite enviamos la siguiente info
+
+		#Cuando recibimos peticion de invite enviamos la siguiente info
 		def RecibeINVITE(self):
             self.wfile.write("SIP/2.0 100 Trying" + "\r\n")
             self.wfile.write("SIP/2.0 180 Ring" + "\r\n")
@@ -50,6 +54,32 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
             SDP = CreaSDP(data)
             self.wfile.write(SDP + "\r\n")
 
+		#Cuando recibimos peticion de ACK
+		def RecibeACK(self):
+            Shell = "./mp32rtp -i " + SERVER + " -p " \
+			+ str(data["puerto_rtp"]) + " < " + str(data["path_audio"])
+            print "Vamos a ejecutar para el envio RTP: \r\n " + Shell
+            os.system(Shell)
+
+		#Leemos la linea, troceamos hasta encontrar la palabra importante
+		#en este caso el SIP y el metodo
+		line = self.rfile.read()
+        info = line.split("\r\n")
+        info1 = info[0].split(" ")
+        SIP = info1[2]
+        metod = info1[0]
+        if SIP == "SIP/2.0":
+            if metod == "INVITE":
+                RecibeINVITE(self)
+            elif metod == "ACK":
+                RecibeACK(self)
+            elif metod == "BYE":
+                self.wfile.write("SIP/2.0 200 OK\r\n")
+            else:
+                self.wfile.write("SIP/2.0 405 Method Not Allowed\r\n")
+        else:
+            self.wfile.write("SIP/2.0 400 Bad Request\r\n")
+            sys.exit()
 
 if __name__ == "__main__":
     cadena = sys.argv
