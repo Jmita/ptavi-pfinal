@@ -48,6 +48,47 @@ class LeerUAxml(ContentHandler):
 	    SDP = SDP + "m=audio " + str(data["puerto_rtp"]) + " RTP"
 	    return SDP
 	
+	#Procedimiento cuando recibimos respuesta REGISTER
+	def RegisterResp(data, fich):
+    	try:
+        	Respuesta = my_socket.recv(1024)
+        	print "Recibido: \r\n" + Respuesta
+    	except:
+        	print "Error: no server listening at " + SERVER + " port " + str(PORT)
+        	localtime()
+			#Escribimos en el fichero el report de error no escucha
+        	fich.write(" Error: no server listening at "+ data["ip_server"] + "port " + data["puerto_server"] + "\r\n")
+        	sys.exit()
+        	my_socket.close()
+    	mess = Respuesta.split(" ")
+    	mess = mess[1]
+    	if mess == "200":
+        	localtime()
+			#Escribimos en el fichero report de el 200 ok recibido
+        	fich.write("Received from " + data["ip_proxy"] + str(data["puerto_proxy"]) + ":  200 OK" + "\r\n")
+        	localtime()
+        	fich.write("Finishing.\r\n")
+        	print "Recibido 200 ok"
+    	fich.close()
+    	sys.exit()
+    	my_socket.close()
+
+	#Procedimiento cuando recibimos un BYE
+	def BYEResp(data):
+    	try:
+        	Respuesta = my_socket.recv(1024)
+    	except:
+        	print "Error: no server listening at " + SERVER + " port " + str(PORT)
+        	sys.exit()
+    	mess = Respuesta.split(" ")
+    	mess = mess[1]
+    	if mess == "200":
+        	print "Recibido 200 OK"
+    	my_socket.close()
+    	sys.exit()
+    	my_socket.close()
+
+
     try:
         my_socket.connect((SERVER, PORT))
     except:
