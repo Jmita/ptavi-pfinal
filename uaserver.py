@@ -5,7 +5,7 @@ from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 
 import sys
-import socket
+import SocketServer
 import time
 import os
 
@@ -47,53 +47,65 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
             return SDP
 
 		#Cuando recibimos peticion de invite enviamos la siguiente info
-		def RecibeINVITE(self):
-            self.wfile.write("SIP/2.0 100 Trying" + "\r\n")
-            self.wfile.write("SIP/2.0 180 Ring" + "\r\n")
-            self.wfile.write("SIP/2.0 200 OK" + "\r\n")
-            SDP = CreaSDP(data)
-            self.wfile.write(SDP + "\r\n")
+	def RecibeINVITE(self):
+    		self.wfile.write("SIP/2.0 100 Trying" + "\r\n")
+        	self.wfile.write("SIP/2.0 180 Ring" + "\r\n")
+        	self.wfile.write("SIP/2.0 200 OK" + "\r\n")
+        	SDP = CreaSDP(data)
+        	self.wfile.write(SDP + "\r\n")
 
 		#Cuando recibimos peticion de ACK
-		def RecibeACK(self):
-            Shell = "./mp32rtp -i " + SERVER + " -p " \
+	def RecibeACK(self):
+        	Shell = "./mp32rtp -i " + SERVER + " -p " \
 			+ str(data["puerto_rtp"]) + " < " + str(data["path_audio"])
-            print "Vamos a ejecutar para el envio RTP: \r\n " + Shell
-            os.system(Shell)
+        	print "Vamos a ejecutar para el envio RTP: \r\n " + Shell
+        	os.system(Shell)
 
 		#Leemos la linea, troceamos hasta encontrar la palabra importante
 		#en este caso el SIP y el metodo
-		line = self.rfile.read()
-        info = line.split("\r\n")
-        info1 = info[0].split(" ")
-        SIP = info1[2]
-        metod = info1[0]
-        if SIP == "SIP/2.0":
-            if metod == "INVITE":
-                RecibeINVITE(self)
-            elif metod == "ACK":
-                RecibeACK(self)
-            elif metod == "BYE":
-                self.wfile.write("SIP/2.0 200 OK\r\n")
-            else:
-                self.wfile.write("SIP/2.0 405 Method Not Allowed\r\n")
+	line = self.rfile.read()
+    info = line.split("\r\n")
+    info1 = info[0].split(" ")
+    SIP = info1[2]
+    metod = info1[0]
+    if SIP == "SIP/2.0":
+        if metod == "INVITE":
+            RecibeINVITE(self)
+        elif metod == "ACK":
+            RecibeACK(self)
+        elif metod == "BYE":
+            self.wfile.write("SIP/2.0 200 OK\r\n")
         else:
-            self.wfile.write("SIP/2.0 400 Bad Request\r\n")
-            sys.exit()
+            self.wfile.write("SIP/2.0 405 Method Not Allowed\r\n")
+    else:
+        self.wfile.write("SIP/2.0 400 Bad Request\r\n")
+        sys.exit()
 
 if __name__ == "__main__":
     cadena = sys.argv
-#data: cadena de texto!!!!
-#if len(entrada) != 4:
-		#print "Usage: python uaserver.py "
-		#sys.exit()
-#	else:
-	print "Listening..."
-	SERVER = str(data["ip_server"])
-    PORT = int(data["puerto_server"])
-    serv = SocketServer.UDPServer((SERVER, PORT), EchoHandler)
-    try:
-        serv.serve_forever()
-	except:
+    infopuerto = []
+    if len(cadena) != 2:
         print "Usage: python uaserver.py config"
         sys.exit()
+    #Comprobamos los datos
+    parser = make_parser()
+    cHandler = LeerUAxml()
+    parser.setContentHandler(cHandler)
+    try:
+        parser.parse(open(cadena[1]))
+    except:
+        print "Usage: python uaserver.py config"
+        sys.exit()
+    #Guardamos los los datos
+    data = cHandler.get_tags()
+    SERVER = str(data["ip_server"])
+    PORT = int(data["puerto_server"])
+    serv = SocketServer.UDPServer((SERVER, PORT), EchoHandler)
+    print "Listening...\r\n"
+    try:
+        serv.serve_forever()
+    except:
+        print "Usage: python uaserver.py config"
+        sys.exit()
+
+
