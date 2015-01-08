@@ -70,5 +70,86 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
                 fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
  				+ ": " + "SIP/2.0 400 Bad Request\r\n")
                 fich.close()
-                sys.exit()    
+                sys.exit() 
+		info = self.rfile.read()
+        try:
+            info1 = info.split(" ")
+        except IndexError:
+            sys.exit()
+        metod = info1[0]
+		#Evaluamos segun el metodo recibido
+        if metod == "REGISTER":
+            fich = open(str(data["path_log"]), "a")
+            localtime()
+            fich.write("Received from 127.0.0.1" + ": " + info)
+            RecibeREGISTER(self, dicc, info1)
+        elif metod == "INVITE":
+            fich = open(str(data["path_log"]), "a")
+            localtime()
+            fich.write("Received from 127.0.0.1" + ": " + info)
+            RecibeINVITE(self, dicc, info1, info)
+        elif metod == "ACK":
+            fich = open(str(data["path_log"]), "a")
+            localtime()
+            fich.write("Received from 127.0.0.1" + ": " + info)
+            my_socket.send(info)
+        else:
+            try:
+                fich = open(str(data["path_log"]), "a")
+                localtime()
+                fich.write("Received from 127.0.0.1" + ": " + info)
+                my_socket.send(info)
+                localtime()
+                fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
+ 				+ ": " + info)
+                Respuesta = my_socket.recv(1024)
+                Respuesta = my_socket.recv(1024)
+                localtime()
+                fich.write("Received from 127.0.0.1" + ": " + info)
+                self.wfile.write(Respuesta)
+                localtime()
+                fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
+ 				+ ": " + Respuesta)
+                fich.close()
+            except:
+                fich = open(str(data["path_log"]), "a")
+                localtime()
+                fich.write("Received from 127.0.0.1" + ": " + info)
+                self.wfile.write("SIP/2.0 405 Method Not Allowed\r\n")
+                fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
+ 				+ ": " + "SIP/2.0 405 Method Not Allowed\r\n")
+                fich.close()
+
+if __name__ == "__main__":
+    dicc = {}
+    cadena = sys.argv
+    if len(cadena) != 2:
+        print "Usage: python proxy_registrar.py config"
+        sys.exit()
+    #Comprobamos los datos
+    parser = make_parser()
+    cHandler = ReadxmlProxy()
+    parser.setContentHandler(cHandler)
+    try:
+        parser.parse(open(cadena[1]))
+    except:
+        print "Usage: python proxy_registrar.py config"
+        sys.exit()
+    #Guardamos los datos
+    data = cHandler.get_tags()
+    fich = open(str(data["path_log"]), "w")
+    localtime()
+    fich.write("Starting ...\r\n")
+    my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #Imprimimos los datos
+    SERVER = str(data["ip_server"])
+    PORT = int(data["puerto_server"])
+    serv = SocketServer.UDPServer((SERVER, PORT), EchoHandler)
+    print "Server " + str(data["name_server"]) + " listening at port "\
+ 	+ str(PORT) + "...\r\n"
+    try:
+        serv.serve_forever()
+    except:
+        print "Usage: python proxy_registrar.py config"
+        sys.exit()   
 
