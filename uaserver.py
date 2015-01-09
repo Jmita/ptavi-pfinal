@@ -65,23 +65,23 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
         os.system(Shell)
     #Leemos la linea, troceamos hasta encontrar la palabra importante
     #en este caso el SIP y el metodo
-    line = self.rfile.read()
-    info = line.split("\r\n")
-    info1 = info[0].split(" ")
-    SIP = info1[2]
-    metod = info1[0]
-    if SIP == "SIP/2.0":
-        if metod == "INVITE":
-            RecibeINVITE(self)
-        elif metod == "ACK":
-            RecibeACK(self)
-        elif metod == "BYE":
-            self.wfile.write("SIP/2.0 200 OK\r\n")
+        line = self.rfile.read()
+        info = line.split("\r\n")
+        info1 = info[0].split(" ")
+        SIP = info1[2]
+        metod = info1[0]
+        if SIP == "SIP/2.0":
+            if metod == "INVITE":
+                RecibeINVITE(self)
+            elif metod == "ACK":
+                RecibeACK(self)
+            elif metod == "BYE":
+                self.wfile.write("SIP/2.0 200 OK\r\n")
+            else:
+                self.wfile.write("SIP/2.0 405 Method Not Allowed\r\n")
         else:
-            self.wfile.write("SIP/2.0 405 Method Not Allowed\r\n")
-    else:
-        self.wfile.write("SIP/2.0 400 Bad Request\r\n")
-        sys.exit()
+            self.wfile.write("SIP/2.0 400 Bad Request\r\n")
+            sys.exit()
 
 if __name__ == "__main__":
     cadena = sys.argv
