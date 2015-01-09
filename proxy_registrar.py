@@ -9,16 +9,19 @@ import sys
 import socket
 import SocketServer
 
+
 #Obtenemos el tiempo
 def localtime():
     timme = time.strftime("%Y%m%d%H%M%S", time.localtime())
     fich.write(str(timme) + " ")
 
+
 class LeerxmlProxy(ContentHandler):
-	#Inicializamos el diccionario
+    #Inicializamos el diccionario
     def __init__(self):
         self.dicc = {}
-	#Recogemos los datos
+
+    #Recogemos los datos
     def startElement(self, name, attrs):
         if name == "server":
             self.dicc["name_server"] = attrs.get("name", "")
@@ -33,19 +36,24 @@ class LeerxmlProxy(ContentHandler):
     def get_tags(self):
         return self.dicc
 
+
 class EchoHandler(SocketServer.DatagramRequestHandler):
 
     def handle(self):
-		#Proceso de register en proxy
+        #Proceso de register en proxy
         def RecibeREGISTER(self, dicc, info):
             separar = info[1].split(":")
             dicc[str(separar[1])] = int(separar[2])
             fich = open(str(data["path_log"]), "a")
             self.wfile.write("SIP/2.0 200 OK\r\n")
             localtime()
-            fich.write("Sent to" + data["ip_server"] + ":" +\
- 			str(data["puerto_server"]) + ": REGISTER " + str(separar[1])\
-			+ ":" + data["puerto_server"] + " SIP/2.0" + "\r\n")
+            print "paapapap"
+            fich.write("Sent to " + data["ip_server"] + ":" +\
+            str(data["puerto_server"]) + ": REGISTER " + str(separar[1])\
+            + ":" + data["puerto_server"] + " SIP/2.0" + "\r\n")
+            print "weeeeee"
+            fich.close()
+
         #Proceso de Invite en proxy
         def RecibeINVITE(self, dicc, info1, info):
             separar = info1[1].split(":")
@@ -56,11 +64,11 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
                 my_socket.connect((SERVER, PORT))
                 my_socket.send(str(info))
                 fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
- 				+ ": INVITE " + str(separar[1]) + " SIP/2.0" + "\r\n")
+                + ": INVITE " + str(separar[1]) + " SIP/2.0" + "\r\n")
             else:
                 self.wfile.write("SIP/2.0 404 User Not Found\r\n")
                 fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
- 				+ ": " + "SIP/2.0 400 Bad Request\r\n")
+                + ": " + "SIP/2.0 400 Bad Request\r\n")
                 fich.close()
             try:
                 Respuesta = my_socket.recv(1024)
@@ -68,16 +76,17 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
             except:
                 self.wfile.write("SIP/2.0 404 User Not Found\r\n")
                 fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
- 				+ ": " + "SIP/2.0 400 Bad Request\r\n")
+                + ": " + "SIP/2.0 400 Bad Request\r\n")
                 fich.close()
-                sys.exit() 
-		info = self.rfile.read()
+                sys.exit()
+        info = self.rfile.read()
         try:
             info1 = info.split(" ")
         except IndexError:
             sys.exit()
+
         metod = info1[0]
-		#Evaluamos segun el metodo recibido
+        #Evaluamos segun el metodo recibido
         if metod == "REGISTER":
             fich = open(str(data["path_log"]), "a")
             localtime()
@@ -101,7 +110,7 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
                 my_socket.send(info)
                 localtime()
                 fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
- 				+ ": " + info)
+                + ": " + info)
                 Respuesta = my_socket.recv(1024)
                 Respuesta = my_socket.recv(1024)
                 localtime()
@@ -109,7 +118,7 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
                 self.wfile.write(Respuesta)
                 localtime()
                 fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
- 				+ ": " + Respuesta)
+                + ": " + Respuesta)
                 fich.close()
             except:
                 fich = open(str(data["path_log"]), "a")
@@ -117,7 +126,7 @@ class EchoHandler(SocketServer.DatagramRequestHandler):
                 fich.write("Received from 127.0.0.1" + ": " + info)
                 self.wfile.write("SIP/2.0 405 Method Not Allowed\r\n")
                 fich.write("Sent to 127.0.0.1:" + str(data["puerto_server"])\
- 				+ ": " + "SIP/2.0 405 Method Not Allowed\r\n")
+                + ": " + "SIP/2.0 405 Method Not Allowed\r\n")
                 fich.close()
 
 if __name__ == "__main__":
@@ -128,7 +137,7 @@ if __name__ == "__main__":
         sys.exit()
     #Comprobamos los datos
     parser = make_parser()
-    cHandler = ReadxmlProxy()
+    cHandler = LeerxmlProxy()
     parser.setContentHandler(cHandler)
     try:
         parser.parse(open(cadena[1]))
@@ -146,10 +155,10 @@ if __name__ == "__main__":
     PORT = int(data["puerto_server"])
     serv = SocketServer.UDPServer((SERVER, PORT), EchoHandler)
     print "Server " + str(data["name_server"]) + " listening at port "\
- 	+ str(PORT) + "...\r\n"
+    + str(PORT) + "...\r\n"
     try:
         serv.serve_forever()
     except:
         print "Usage: python proxy_registrar.py config"
-        sys.exit()   
-
+        fich.close()
+        sys.exit()
