@@ -9,11 +9,13 @@ import SocketServer
 import time
 import os
 
+
 class LeerUAxml(ContentHandler):
-	#Inicializamos el diccionario
+    #Inicializamos el diccionario
     def __init__(self):
         self.dicc = {}
-	#Recogemos los datos
+
+    #Recogemos los datos
     def startElement(self, name, attrs):
         if name == "account":
             self.dicc["username"] = attrs.get("username", "")
@@ -34,36 +36,36 @@ class LeerUAxml(ContentHandler):
     def get_tags(self):
         return self.dicc
 
-class EchoHandler(SocketServer.DatagramRequestHandler):
 
+class EchoHandler(SocketServer.DatagramRequestHandler):
     def handle(self):
-		#Creamos toda la cadena de datos relevantes a partir de lo recogido
-		#en el diccionario
+        #Creamos toda la cadena de datos relevantes a partir de lo recogido
+        #en el diccionario
         def CreaSDP(data):
             SDP = "Content-Type: application/sdp" + "\r\n" + "\r\n" + "v=0\r\n"
-            SDP = SDP  + "o=" +str(data["username"]) + " " + str(data["ip_server"]) + "\r\n"
+            SDP = SDP + "o=" + str(data["username"]) + " "\
+            + str(data["ip_server"]) + "\r\n"
             SDP = SDP + "s=MiSesion" + "\r\n" + "t=0" + "\r\n"
             SDP = SDP + "m=audio " + str(data["puerto_rtp"]) + " RTP"
             return SDP
 
-		#Cuando recibimos peticion de invite enviamos la siguiente info
-	def RecibeINVITE(self):
-    		self.wfile.write("SIP/2.0 100 Trying" + "\r\n")
-        	self.wfile.write("SIP/2.0 180 Ring" + "\r\n")
-        	self.wfile.write("SIP/2.0 200 OK" + "\r\n")
-        	SDP = CreaSDP(data)
-        	self.wfile.write(SDP + "\r\n")
+    #Cuando recibimos peticion de invite enviamos la siguiente info
+    def RecibeINVITE(self):
+            self.wfile.write("SIP/2.0 100 Trying" + "\r\n")
+            self.wfile.write("SIP/2.0 180 Ring" + "\r\n")
+            self.wfile.write("SIP/2.0 200 OK" + "\r\n")
+            SDP = CreaSDP(data)
+            self.wfile.write(SDP + "\r\n")
 
-		#Cuando recibimos peticion de ACK
-	def RecibeACK(self):
-        	Shell = "./mp32rtp -i " + SERVER + " -p " \
-			+ str(data["puerto_rtp"]) + " < " + str(data["path_audio"])
-        	print "Vamos a ejecutar para el envio RTP: \r\n " + Shell
-        	os.system(Shell)
-
-		#Leemos la linea, troceamos hasta encontrar la palabra importante
-		#en este caso el SIP y el metodo
-	line = self.rfile.read()
+    #Cuando recibimos peticion de ACK
+    def RecibeACK(self):
+        Shell = "./mp32rtp -i " + SERVER + " -p " \
+        + str(data["puerto_rtp"]) + " < " + str(data["path_audio"])
+        print "Vamos a ejecutar para el envio RTP: \r\n " + Shell
+        os.system(Shell)
+    #Leemos la linea, troceamos hasta encontrar la palabra importante
+    #en este caso el SIP y el metodo
+    line = self.rfile.read()
     info = line.split("\r\n")
     info1 = info[0].split(" ")
     SIP = info1[2]
@@ -107,5 +109,3 @@ if __name__ == "__main__":
     except:
         print "Usage: python uaserver.py config"
         sys.exit()
-
-
