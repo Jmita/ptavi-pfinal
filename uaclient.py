@@ -9,15 +9,18 @@ import socket
 import time
 import os
 
+
 #Obtenemos el tiempo
 def localtime():
-      timme = time.strftime("%Y%m%d%H%M%S", time.localtime())
-      fich.write(str(timme) + " ")
+    timme = time.strftime("%Y%m%d%H%M%S", time.localtime())
+    fich.write(str(timme) + " ")
+
 
 class LeerUAxml(ContentHandler):
     #Inicializamos el diccionario
     def __init__(self):
         self.dicc = {}
+
     #Recogemos los datos
     def startElement(self, name, attrs):
         if name == "account":
@@ -39,14 +42,17 @@ class LeerUAxml(ContentHandler):
     def get_tags(self):
         return self.dicc
 
+
 #Creamos toda la cadena de datos relevantes a partir de lo recogido
 #en el diccionario
 def CreaSDP(data):
     SDP = "Content-Type: application/sdp" + "\r\n" + "\r\n" + "v=0\r\n"
-    SDP = SDP + "o=" + str(data["username"]) + " " + str(data["ip_server"]) + "\r\n"
+    SDP = SDP + "o=" + str(data["username"]) + " "\
+    + str(data["ip_server"]) + "\r\n"
     SDP = SDP + "s=MiSesión" + "\r\n" + "t=0" + "\r\n"
     SDP = SDP + "m=audio " + str(data["puerto_rtp"]) + " RTP"
     return SDP
+
 
 #Procedimiento cuando recibimos respuesta REGISTER
 def RegisterResp(data, fich):
@@ -57,7 +63,8 @@ def RegisterResp(data, fich):
         print "Error: no server listening at " + SERVER + " port " + str(PORT)
         localtime()
         #Escribimos en el fichero el report de error no escucha
-        fich.write(" Error: no server listening at "+ data["ip_server"] + "port " + data["puerto_server"] + "\r\n")
+        fich.write(" Error: no server listening at " + data["ip_server"] \
+        + "port " + data["puerto_server"] + "\r\n")
         sys.exit()
         my_socket.close()
     mess = Respuesta.split(" ")
@@ -65,13 +72,15 @@ def RegisterResp(data, fich):
     if mess == "200":
         localtime()
         #Escribimos en el fichero report de el 200 ok recibido
-        fich.write("Received from " + data["ip_proxy"] + str(data["puerto_proxy"]) + ":  200 OK" + "\r\n")
+        fich.write("Received from " + data["ip_proxy"] \
+        + str(data["puerto_proxy"]) + ":  200 OK" + "\r\n")
         localtime()
         fich.write("Finishing.\r\n")
         print "Recibido 200 OK"
     fich.close()
     sys.exit()
     my_socket.close()
+
 
 #Procedimiento cuando recibimos un BYE
 def ByeResp(data):
@@ -87,6 +96,7 @@ def ByeResp(data):
     my_socket.close()
     sys.exit()
     my_socket.close()
+
 
 def InviteResp(data):
     frase = "ACK sip:" + str(data["username"]) + " SIP/2.0"
@@ -116,7 +126,8 @@ def InviteResp(data):
         if mess == "200":
             localtime()
             fich.write("Received from " + data["ip_proxy"]\
-            + str(data["puerto_proxy"]) + ":  100 trying, 180 ring y 200 OK" + "\r\n")
+            + str(data["puerto_proxy"]) \
+            + ":  100 trying, 180 ring y 200 OK" + "\r\n")
             print "Enviamos ACK de la forma: " + frase
             localtime()
             fich.write("Sent to" + str(data["ip_proxy"]) + ":" \
@@ -209,7 +220,8 @@ if __name__ == "__main__":
             " port " + str(PORT)
             localtime()
             fich.write("Error: no server listening at " + \
-            str(data["ip_server"]) + "port " + str(data["puerto_server"]) + "\r\n")
+            str(data["ip_server"]) + "port "\
+            + str(data["puerto_server"]) + "\r\n")
             fich.close()
             my_socket.close()
             sys.exit()
@@ -228,6 +240,7 @@ if __name__ == "__main__":
              + " port " + str(PORT)
             localtime()
             fich.write("Error: no server listening at " + \
-            str(data["ip_server"]) + "port " + str(data["puerto_server"]) + "\r\n")
+            str(data["ip_server"]) + "port "\
+            + str(data["puerto_server"]) + "\r\n")
             my_socket.close()
             sys.exit()
